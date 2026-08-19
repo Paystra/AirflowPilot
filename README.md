@@ -40,10 +40,8 @@ dimension, and reports the result to Slack.
 | DAG ID          | File                       | Schedule           | What it does                                             |
 | --------------- | -------------------------- | ------------------ | -------------------------------------------------------- |
 | `countries_api` | `dags/countries_api.py`    | Manual (parametric)| REST Countries API → Snowflake ETL + Slack notification  |
-| `example_pilot` | `dags/example_pilot.py`    | `@daily`           | Minimal TaskFlow demo (pick numbers → sum → report)      |
-| `example_slack` | `dags/example_slack.py`    | Manual             | Posts a test message via a Slack Incoming Webhook        |
 
-All DAGs are paused at creation (`AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION=true`).
+DAGs are paused at creation (`AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION=true`).
 Unpause them in the UI to schedule, or trigger them manually.
 
 ## First run
@@ -64,8 +62,8 @@ Then open the web UI at http://localhost:8080 and log in with:
 - **Username:** `airflow`
 - **Password:** `airflow`
 
-You should see the DAGs listed above. Unpause one (toggle on the left) or trigger
-it manually with the play button.
+You should see the `countries_api` DAG listed above. Unpause it (toggle on the
+left) or trigger it manually with the play button.
 
 ## Common commands
 
@@ -223,8 +221,7 @@ docker compose up -d   # picks up the new env-var
 
 The stack expects a `slack_default` connection. The `countries_api` pipeline sends
 success/failure notifications through the helpers in
-[`dags/utils/slack_notifications.py`](dags/utils/slack_notifications.py), and
-`example_slack` posts a message via `SlackWebhookOperator`.
+[`dags/utils/slack_notifications.py`](dags/utils/slack_notifications.py).
 
 ### 1. Create an Incoming Webhook
 
@@ -256,15 +253,7 @@ The UI equivalent is **Admin -> Connections -> +**, Connection Id
 `slack_default`, Connection Type `Slack Incoming Webhook`, with the token in the
 Password field. (The `.env` var overrides a same-named UI connection.)
 
-### 3. Test it
-
-Trigger the `example_slack` DAG and confirm the message lands in your channel:
-
-```bash
-docker compose run --rm airflow-cli airflow dags trigger example_slack
-```
-
-### 4. Notification helpers
+### 3. Notification helpers
 
 Reusable notifiers live in
 [`dags/utils/slack_notifications.py`](dags/utils/slack_notifications.py):
