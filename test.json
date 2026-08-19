@@ -1,0 +1,362 @@
+{
+    "_match": [
+      {
+        "path": "region",
+        "value": "Europe"
+      }
+    ],
+    "_meta": {
+      "lastUpdatedTimestamp": 1783787495
+    },
+    "area": {
+      "kilometers": 28748,
+      "miles": 11099.7
+    },
+    "assets": [],
+    "borders": [
+      "MNE",
+      "GRC",
+      "MKD",
+      "UNK"
+    ],
+    "calling_codes": [
+      "355"
+    ],
+    "capitals": [
+      {
+        "attributes": {
+          "administrative": false,
+          "constitutional": false,
+          "executive": false,
+          "judicial": false,
+          "legislative": false,
+          "primary": true
+        },
+        "coordinates": {
+          "lat": 41.32,
+          "lng": 19.82
+        },
+        "name": "Tirana"
+      }
+    ],
+    "cars": {
+      "driving_side": "right",
+      "signs": [
+        "AL"
+      ]
+    },
+    "classification": {
+      "dependency": false,
+      "dependency_type": "",
+      "disputed": false,
+      "iso_status": "official",
+      "sovereign": true,
+      "un_member": true,
+      "un_observer": false
+    },
+    "codes": {
+      "alpha_2": "AL",
+      "alpha_3": "ALB",
+      "ccn3": "008",
+      "cioc": "ALB",
+      "fifa": "ALB",
+      "fips": "AL",
+      "gec": "AL"
+    },
+    "continents": [
+      "Europe"
+    ],
+    "coordinates": {
+      "lat": 41,
+      "lng": 20
+    },
+    "currencies": [
+      {
+        "code": "ALL",
+        "name": "Albanian lek",
+        "symbol": "L"
+      }
+    ],
+    "date": {
+      "academic_year_start": {
+        "day": 1,
+        "month": 9
+      },
+      "fiscal_year_start": {
+        "corporate": {
+          "basis": "convention",
+          "day": 1,
+          "month": 1
+        },
+        "government": {
+          "day": 1,
+          "month": 1
+        },
+        "personal": {
+          "day": 1,
+          "month": 1
+        }
+      },
+      "start_of_week": "monday"
+    },
+    "demonyms": {
+      "eng": {
+        "f": "Albanian",
+        "m": "Albanian"
+      },
+      "fra": {
+        "f": "Albanaise",
+        "m": "Albanais"
+      }
+    },
+    "economy": {
+      "gini_coefficient": {
+        "2016": 33.7,
+        "2017": 33.1,
+        "2018": 30.1,
+        "2019": 30.1,
+        "2020": 29.4
+      }
+    },
+    "flag": {
+      "colors": {
+        "dominant": "#010000",
+        "palette": [
+          {
+            "hex": "#010000",
+            "proportion": 0.11504802561366062
+          },
+          {
+            "hex": "#ff1419",
+            "proportion": 0.8661686232657417
+          },
+          {
+            "hex": "#8c0002",
+            "proportion": 0.008537886872998933
+          },
+          {
+            "hex": "#690304",
+            "proportion": 0.0017075773745997866
+          },
+          {
+            "hex": "#5f0000",
+            "proportion": 0.0014941302027748132
+          },
+          {
+            "hex": "#b40a0e",
+            "proportion": 0.0012806830309498398
+          },
+          {
+            "hex": "#c00005",
+            "proportion": 0.00384204909284952
+          },
+          {
+            "hex": "#d30e12",
+            "proportion": 0.00192102454642476
+          }
+        ],
+        "prominent": "#ff1419",
+        "swatches": {
+          "dark_muted": "#5f0000",
+          "dark_vibrant": "#8c0002",
+          "light_muted": null,
+          "light_vibrant": null,
+          "muted": "#d30e12",
+          "vibrant": "#ff1419"
+        }
+      },
+      "description": "The flag of Albania features a silhouetted double-headed black eagle at the center of a red field.",
+      "emoji": "🇦🇱",
+      "html_entity": "&#127462;&#127473;",
+      "unicode": "U+1F1E6 U+1F1F1",
+      "url_png": "https://flags.restcountries.com/v5/w640/al.png",
+      "url_svg": "https://flags.restcountries.com/v5/svg/al.svg"
+    },
+    "government_type": "Unitary parliamentary republic",
+    "landlocked": false,
+    "languages": [
+      {
+        "bcp47": "sq",
+        "iso639_1": "sq",
+        "iso639_2b": "alb",
+        "iso639_2t": "sqi",
+        "iso639_3": "sqi",
+        "name": "Albanian",
+        "native_name": "shqip"
+      }
+    ],
+    "leaders": [
+      {
+        "message": "data.leaders is only available on paid plans. Go to https://restcountries.com/plans to make updates to your account.",
+        "sample": "https://files-03.restcountries.com/countries.00/sample.leaders.json"
+      }
+    ],
+    "links": {
+      "google_maps": "https://goo.gl/maps/BzN9cTuj68ZA8SyZ8",
+      "official": "https://www.kryeministria.al",
+      "open_street_maps": "https://www.openstreetmap.org/relation/53292",
+      "wikipedia": "https://en.wikipedia.org/wiki/Albania"
+    },
+    "memberships": {
+      "african_union": false,
+      "arab_league": false,
+      "asean": false,
+      "brics": false,
+      "commonwealth": false,
+      "eu": false,
+      "eurozone": false,
+      "g20": false,
+      "g7": false,
+      "nato": true,
+      "oecd": false,
+      "opec": false,
+      "schengen": false,
+      "un": true
+    },
+    "names": {
+      "alternates": [
+        "Shqipëri",
+        "Shqipnia"
+      ],
+      "common": "Albania",
+      "native": {
+        "sqi": {
+          "common": "Shqipëria",
+          "official": "Republika e Shqipërisë"
+        }
+      },
+      "official": "Republic of Albania",
+      "translations": {
+        "ara": {
+          "common": "ألبانيا",
+          "official": "جمهورية ألبانيا"
+        },
+        "bre": {
+          "common": "Albania",
+          "official": "Republik Albania"
+        },
+        "ces": {
+          "common": "Albánie",
+          "official": "Albánská republika"
+        },
+        "cym": {
+          "common": "Albania",
+          "official": "Gweriniaeth Albania"
+        },
+        "deu": {
+          "common": "Albanien",
+          "official": "Republik Albanien"
+        },
+        "est": {
+          "common": "Albaania",
+          "official": "Albaania Vabariik"
+        },
+        "fas": {
+          "common": "آلبانی",
+          "official": "جمهوری آلبانی"
+        },
+        "fin": {
+          "common": "Albania",
+          "official": "Albanian tasavalta"
+        },
+        "fra": {
+          "common": "Albanie",
+          "official": "République d'Albanie"
+        },
+        "hrv": {
+          "common": "Albanija",
+          "official": "Republika Albanija"
+        },
+        "hun": {
+          "common": "Albánia",
+          "official": "Albán Köztársaság"
+        },
+        "ind": {
+          "common": "Albania",
+          "official": "Republik Albania"
+        },
+        "ita": {
+          "common": "Albania",
+          "official": "Repubblica d'Albania"
+        },
+        "jpn": {
+          "common": "アルバニア",
+          "official": "アルバニア共和国"
+        },
+        "kor": {
+          "common": "알바니아",
+          "official": "알바니아 공화국"
+        },
+        "nld": {
+          "common": "Albanië",
+          "official": "Republiek Albanië"
+        },
+        "pol": {
+          "common": "Albania",
+          "official": "Republika Albanii"
+        },
+        "por": {
+          "common": "Albânia",
+          "official": "República da Albânia"
+        },
+        "rus": {
+          "common": "Албания",
+          "official": "Республика Албания"
+        },
+        "slk": {
+          "common": "Albánsko",
+          "official": "Albánska republika"
+        },
+        "spa": {
+          "common": "Albania",
+          "official": "República de Albania"
+        },
+        "srp": {
+          "common": "Албанија",
+          "official": "Република Албанија"
+        },
+        "swe": {
+          "common": "Albanien",
+          "official": "Republiken Albanien"
+        },
+        "tur": {
+          "common": "Arnavutluk",
+          "official": "Arnavutluk Cumhuriyeti"
+        },
+        "urd": {
+          "common": "البانیا",
+          "official": "جمہوریہ البانیا"
+        },
+        "zho": {
+          "common": "阿尔巴尼亚",
+          "official": "阿尔巴尼亚共和国"
+        }
+      }
+    },
+    "number_format": {
+      "decimal_separator": ",",
+      "thousands_separator": "."
+    },
+    "parent": {
+      "alpha_2": "",
+      "alpha_3": ""
+    },
+    "population": 2335930,
+    "postal_code": {
+      "format": "",
+      "regex": ""
+    },
+    "region": "Europe",
+    "subregion": "Southeast Europe",
+    "timezones": [
+      "UTC+01:00"
+    ],
+    "tlds": [
+      ".al"
+    ],
+    "units": {
+      "measurement_system": "metric",
+      "temperature_scale": "Celsius"
+    },
+    "uuid": "9bc482ab-46e2-4fdf-97bb-251aa67a0755"
+  }

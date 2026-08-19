@@ -1,0 +1,7 @@
+# Extra Python dependencies to bake into the Airflow image.
+# Providers used by the local stack and DAGs.
+# Add your own provider packages / libraries below, then run `docker compose build`.
+apache-airflow-providers-fab
+apache-airflow-providers-celery
+apache-airflow-providers-snowflake
+apache-airflow-providers-slack

@@ -1,0 +1,22 @@
+# Secrets / local env
+.env
+
+# Snowflake / other private keys (keep the folder, ignore its contents)
+secrets/*
+!secrets/.gitkeep
+
+# Airflow runtime artifacts
+logs/
+config/airflow.cfg
+airflow.db
+airflow-webserver.pid
+standalone_admin_password.txt
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Editor / OS
+.DS_Store
