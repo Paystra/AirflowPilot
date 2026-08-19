@@ -1,27 +1,50 @@
 # Airflow Pilot
 
 A lightweight local [Apache Airflow](https://airflow.apache.org/) 3.3.1 environment
-running on Docker Compose with the **CeleryExecutor**, **PostgreSQL**, and **Redis**.
-The image includes Airflow's Snowflake provider for Snowflake hooks, operators,
-transfers, and SQL execution.
+running on Docker Compose with the **CeleryExecutor**, **PostgreSQL 16**, and
+**Redis 7.2**. The image bundles Airflow's Snowflake and Slack providers so DAGs
+can run SQL against Snowflake (via key-pair auth) and post notifications to Slack.
+
+The headline example is the **`countries_api`** pipeline: it pulls country data
+from the [REST Countries API](https://restcountries.com), lands the raw JSON in
+Snowflake, transforms it through a staging table, merges it into a curated
+dimension, and reports the result to Slack.
+
+> This setup is for local development only. Do not use it as-is in production.
 
 ## Prerequisites
 
 - Docker Desktop / Docker Engine with the Compose v2 plugin (`docker compose`)
 - At least 4 GB of memory allocated to Docker
+- (Optional) A Snowflake account and a Slack workspace to exercise the
+  `countries_api` and Slack DAGs
 
 ## Layout
 
-| Path          | Purpose                                              |
-| ------------- | ---------------------------------------------------- |
-| `dags/`       | Your DAG definitions (mounted into every container)  |
-| `plugins/`    | Custom Airflow plugins                               |
-| `config/`     | Optional `airflow.cfg` overrides                     |
-| `logs/`       | Task logs (generated at runtime)                     |
-| `secrets/`    | Private keys mounted read-only (git-ignored)         |
-| `Dockerfile`  | Extends the official image with `requirements.txt`   |
-| `compose.yaml`| Airflow, Celery worker, Redis, and Postgres services |
-| `.env`        | Local secrets/config (git-ignored)                   |
+| Path            | Purpose                                                       |
+| --------------- | ------------------------------------------------------------- |
+| `dags/`         | DAG definitions (mounted into every container)                |
+| `dags/utils/`   | Shared helpers (`snow_con.py`, `slack_notifications.py`)      |
+| `Snowflake/DDL/`| Snowflake table DDL + merge DML applied manually before runs  |
+| `plugins/`      | Custom Airflow plugins                                        |
+| `config/`       | Optional `airflow.cfg` overrides                              |
+| `logs/`         | Task logs (generated at runtime, git-ignored)                 |
+| `secrets/`      | Private keys mounted read-only (git-ignored)                  |
+| `Dockerfile`    | Extends the official image with `requirements.txt`            |
+| `compose.yaml`  | Airflow, Celery worker, Redis, and Postgres services          |
+| `requirements.txt` | Extra Python packages baked into the image                 |
+| `.env`          | Local secrets/config (git-ignored)                            |
+
+## DAGs
+
+| DAG ID          | File                       | Schedule           | What it does                                             |
+| --------------- | -------------------------- | ------------------ | -------------------------------------------------------- |
+| `countries_api` | `dags/countries_api.py`    | Manual (parametric)| REST Countries API → Snowflake ETL + Slack notification  |
+| `example_pilot` | `dags/example_pilot.py`    | `@daily`           | Minimal TaskFlow demo (pick numbers → sum → report)      |
+| `example_slack` | `dags/example_slack.py`    | Manual             | Posts a test message via a Slack Incoming Webhook        |
+
+All DAGs are paused at creation (`AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION=true`).
+Unpause them in the UI to schedule, or trigger them manually.
 
 ## First run
 
@@ -41,8 +64,8 @@ Then open the web UI at http://localhost:8080 and log in with:
 - **Username:** `airflow`
 - **Password:** `airflow`
 
-You should see the `example_pilot` DAG. Unpause it (toggle on the left) to let it
-run, or trigger it manually with the play button.
+You should see the DAGs listed above. Unpause one (toggle on the left) or trigger
+it manually with the play button.
 
 ## Common commands
 
@@ -53,6 +76,9 @@ docker compose logs -f
 # List DAGs via the CLI (one-off container)
 docker compose run --rm airflow-cli airflow dags list
 
+# Trigger the countries pipeline (uses the default region, Europe)
+docker compose run --rm airflow-cli airflow dags trigger countries_api
+
 # Start Flower to monitor Celery workers, then open http://localhost:5555
 docker compose --profile flower up -d flower
 
@@ -62,6 +88,49 @@ docker compose down
 # Stop and wipe the database volume too
 docker compose down --volumes
 ```
+
+## The `countries_api` pipeline
+
+The DAG takes a single `region` parameter (`Africa`, `Americas`, `Asia`,
+`Europe`, or `Oceania`; default `Europe`) and runs the following flow:
+
+```
+get_countries_list                       # GET the REST Countries API for the region
+└── snowflake (task group)
+      ├── write_to_snowflake             # INSERT raw JSON into RAW_COUNTRIES
+      ├── truncate_staging_table         # TRUNCATE STG_COUNTRIES
+      ├── insert_into_staging            # Flatten latest raw load into STG_COUNTRIES
+      └── merge_into_curated             # MERGE into CURATED_COUNTRIES
+└── notify_load_success                  # Slack success message
+```
+
+**Source:** `GET https://api.restcountries.com/countries/v5?region=<region>&limit=100`
+with an `Authorization: <RESTCOUNTRIES_API_KEY>` header.
+
+**Target objects** live in the `AIRFLOW_PILOT.COUNTRIES` schema:
+
+| Table               | Role                                                          |
+| ------------------- | ------------------------------------------------------------ |
+| `RAW_COUNTRIES`     | Raw API JSON (`RAW_DATA VARIANT`, auto-increment `LOAD_ID`)  |
+| `STG_COUNTRIES`     | Flattened staging (names, codes, currency, links, timezones) |
+| `CURATED_COUNTRIES` | Curated dimension deduplicated by `ALPHA3_CODE`, with audit columns |
+
+### Snowflake schema setup (required before first run)
+
+Apply the DDL scripts in `Snowflake/DDL/` against your Snowflake account, in this
+order, before triggering the DAG:
+
+1. `Snowflake/DDL/RAW_COUNTRIES.sql`
+2. `Snowflake/DDL/STG_COUNTRIES.sql`
+3. `Snowflake/DDL/CURATED_COUNTRIES.sql`
+
+(`Snowflake/DDL/Merge dml.sql` mirrors the merge logic embedded in the DAG and is
+kept for reference.)
+
+### REST Countries API key
+
+Set `RESTCOUNTRIES_API_KEY` in `.env`. It is sent verbatim as the `Authorization`
+header on the API request.
 
 ## Adding dependencies
 
@@ -74,16 +143,19 @@ docker compose up -d
 
 The image currently installs:
 
-- `apache-airflow-providers-snowflake`
-- `apache-airflow-providers-celery`
 - `apache-airflow-providers-fab`
+- `apache-airflow-providers-celery`
+- `apache-airflow-providers-snowflake`
 - `apache-airflow-providers-slack`
+
+`requests` and `pendulum` are used by the DAGs; `pendulum` ships with Airflow, and
+`requests` is available in the base image.
 
 ## Snowflake connection (key-pair auth)
 
-The stack ships with a sample `snowflake_default` connection and a test DAG
-(`example_snowflake`) that runs `SELECT CURRENT_VERSION(), CURRENT_ACCOUNT(),
-CURRENT_ROLE();` to verify connectivity.
+The stack expects a `snowflake_default` connection. The `countries_api` pipeline
+runs its SQL through the `snow_execute_query` helper in
+[`dags/utils/snow_con.py`](dags/utils/snow_con.py), which uses this connection.
 
 ### 1. Create / register a key-pair
 
@@ -121,7 +193,7 @@ Two equivalent options:
 `AIRFLOW_CONN_SNOWFLAKE_DEFAULT` line in `.env` with your values, then restart:
 
 ```bash
-AIRFLOW_CONN_SNOWFLAKE_DEFAULT='{"conn_type":"snowflake","login":"YOUR_USER","password":"KEY_PASSPHRASE_OR_EMPTY","schema":"PUBLIC","extra":{"account":"ORGNAME-ACCOUNT","warehouse":"COMPUTE_WH","database":"YOUR_DB","role":"YOUR_ROLE","private_key_file":"/opt/airflow/secrets/rsa_key.p8"}}'
+AIRFLOW_CONN_SNOWFLAKE_DEFAULT='{"conn_type":"snowflake","login":"YOUR_USER","password":"KEY_PASSPHRASE_OR_EMPTY","schema":"COUNTRIES","extra":{"account":"ORGNAME-ACCOUNT","warehouse":"COMPUTE_WH","database":"AIRFLOW_PILOT","role":"YOUR_ROLE","private_key_file":"/opt/airflow/secrets/rsa_key.p8"}}'
 ```
 
 ```bash
@@ -141,25 +213,18 @@ docker compose up -d   # picks up the new env-var
 | Connection Type | `Snowflake`                                        |
 | Login           | your Snowflake user                                |
 | Password        | private-key passphrase (blank if unencrypted)      |
-| Schema          | e.g. `PUBLIC`                                       |
-| Extra (JSON)    | `{"account":"ORGNAME-ACCOUNT","warehouse":"COMPUTE_WH","database":"YOUR_DB","role":"YOUR_ROLE","private_key_file":"/opt/airflow/secrets/rsa_key.p8"}` |
+| Schema          | e.g. `COUNTRIES`                                   |
+| Extra (JSON)    | `{"account":"ORGNAME-ACCOUNT","warehouse":"COMPUTE_WH","database":"AIRFLOW_PILOT","role":"YOUR_ROLE","private_key_file":"/opt/airflow/secrets/rsa_key.p8"}` |
 
 > Note: if `AIRFLOW_CONN_SNOWFLAKE_DEFAULT` is set in `.env`, it **overrides** a
 > UI connection with the same id. Use one or the other to avoid confusion.
 
-### 4. Test it
-
-Trigger the `example_snowflake` DAG from the UI (or the CLI below) and check the
-`check_connection` task log for the returned version/account/role.
-
-```bash
-docker compose run --rm airflow-cli airflow dags trigger example_snowflake
-```
-
 ## Slack messages (Incoming Webhook)
 
-The stack ships with a sample `slack_default` connection, a test DAG
-(`example_slack`) that posts a message, and a reusable failure-alert notifier.
+The stack expects a `slack_default` connection. The `countries_api` pipeline sends
+success/failure notifications through the helpers in
+[`dags/utils/slack_notifications.py`](dags/utils/slack_notifications.py), and
+`example_slack` posts a message via `SlackWebhookOperator`.
 
 ### 1. Create an Incoming Webhook
 
@@ -199,31 +264,50 @@ Trigger the `example_slack` DAG and confirm the message lands in your channel:
 docker compose run --rm airflow-cli airflow dags trigger example_slack
 ```
 
-### 4. Send failure alerts from any DAG
+### 4. Notification helpers
 
-A reusable notifier lives in [dags/slack_notifications.py](dags/slack_notifications.py).
-Attach it to any DAG to get a Slack message whenever a task fails:
+Reusable notifiers live in
+[`dags/utils/slack_notifications.py`](dags/utils/slack_notifications.py):
+
+- `push_slack_notification(text)` - failure alert with DAG/task context and a link
+  back to the Airflow run.
+- `push_slack_success_notification(text)` - success message with DAG context.
+
+Import them from a DAG (the `dags/` directory is on `PYTHONPATH`, so `utils` is
+importable):
 
 ```python
-from slack_notifications import slack_failure_notifier
-
-@dag(..., on_failure_callback=slack_failure_notifier)
-def my_dag():
-    ...
+from utils.slack_notifications import (
+    push_slack_notification,
+    push_slack_success_notification,
+)
 ```
 
-It is already wired into `example_pilot` and `example_snowflake`.
+## Environment variables
+
+Local secrets and config live in `.env` (git-ignored). Key entries:
+
+| Variable                          | Purpose                                                    |
+| --------------------------------- | ---------------------------------------------------------- |
+| `AIRFLOW_UID`                     | Host user ID for file ownership (default `50000`)          |
+| `FERNET_KEY`                      | Encrypts Airflow connections/variables at rest             |
+| `_AIRFLOW_WWW_USER_USERNAME`      | Web UI admin username (default `airflow`)                  |
+| `_AIRFLOW_WWW_USER_PASSWORD`      | Web UI admin password (default `airflow`)                  |
+| `AIRFLOW__API_AUTH__JWT_SECRET`   | JWT signing secret for the internal API                    |
+| `AIRFLOW_CONN_SNOWFLAKE_DEFAULT`  | Snowflake connection JSON (key-pair auth)                  |
+| `AIRFLOW_CONN_SLACK_DEFAULT`      | Slack Incoming Webhook connection JSON                     |
+| `RESTCOUNTRIES_API_KEY`           | Bearer token sent to the REST Countries API                |
+
+Regenerate the `FERNET_KEY` for any shared or long-lived environment:
+
+```bash
+python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
+```
 
 ## Configuration notes
 
-- Environment defaults live in `.env`. It is git-ignored, so regenerate the
-  `FERNET_KEY` for any shared or long-lived environment:
-
-  ```bash
-  python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
-  ```
-
-- Example DAGs are disabled (`AIRFLOW__CORE__LOAD_EXAMPLES=false`). Flip it to
-  `true` in `compose.yaml` if you want Airflow's bundled examples.
-
-> This setup is for local development only. Do not use it as-is in production.
+- Airflow's bundled examples are disabled (`AIRFLOW__CORE__LOAD_EXAMPLES=false`).
+  Flip it to `true` in `compose.yaml` if you want them.
+- There is currently no automated test suite; validate DAGs by triggering them
+  from the UI or CLI. `test.json` holds a sample REST Countries API response
+  (Albania) useful as a schema reference.
