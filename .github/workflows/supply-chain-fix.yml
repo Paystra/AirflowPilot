@@ -1,0 +1,36 @@
+name: Prepare supply chain fixes
+on:
+  workflow_dispatch:
+permissions:
+  contents: write
+  pull-requests: write
+concurrency:
+  group: supply-chain-fixes
+  cancel-in-progress: false
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+      - name: Create working branch
+        run: git switch -c "automation/supply-chain-${GITHUB_RUN_ID}"
+      - uses: Paystra/supply-chain-linter@d1a763bac178724488e37eb1838f0ad870a0dd67
+        with:
+          command: fix
+          auto-commit: 'true'
+      - name: Open pull request for manual testing and merge
+        env:
+          GH_TOKEN: ${{ github.token }}
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+        run: |
+          branch="automation/supply-chain-${GITHUB_RUN_ID}"
+          if ! git ls-remote --exit-code --heads origin "$branch" >/dev/null; then
+            echo 'No fixes to propose.' >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          gh pr create --base "$DEFAULT_BRANCH" --head "$branch" \
+            --title 'Pin dependencies and synchronize lockfiles' \
+            --body 'ITOP-417: automatically generated dependency pins and npm hardening. Run repository-specific tests/builds before manual merge. This workflow does not approve or merge changes.'
