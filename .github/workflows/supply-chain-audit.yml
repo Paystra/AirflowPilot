@@ -1,0 +1,23 @@
+name: Supply chain audit
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: supply-chain-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: Paystra/supply-chain-linter@d1a763bac178724488e37eb1838f0ad870a0dd67
+        with:
+          command: lint
+          auto-commit: 'false'
+          report-only: 'true'
