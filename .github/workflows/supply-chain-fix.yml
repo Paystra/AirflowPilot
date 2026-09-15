@@ -17,7 +17,7 @@ jobs:
           ref: ${{ github.event.repository.default_branch }}
       - name: Create working branch
         run: git switch -c "automation/supply-chain-${GITHUB_RUN_ID}"
-      - uses: Paystra/supply-chain-linter@d1a763bac178724488e37eb1838f0ad870a0dd67
+      - uses: Paystra/supply-chain-linter@fb30eb342ad7b00476bd956ccdb777280eb08d0d
         with:
           command: fix
           auto-commit: 'true'
